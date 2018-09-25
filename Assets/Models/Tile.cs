@@ -1,60 +1,71 @@
-﻿using UnityEngine;
+﻿//=======================================================================
+// Copyright Martin "quill18" Glaude 2015.
+//		http://quill18.com
+//=======================================================================
+
+using UnityEngine;
 using System.Collections;
 using System;
 
 public class Tile {
 
-	public enum TileType { Empty, Floor};
+	// TileType is the base type of the tile. In some tile-based games, that might be
+	// the terrain type. For us, we only need to differentiate between empty space
+	// and floor (a.k.a. the station structure/scaffold). Walls/Doors/etc... will be
+	// InstalledObjects sitting on top of the floor.
+	public enum TileType { Empty, Floor };
 
-    TileType type = TileType.Empty;
+	private TileType _type = TileType.Empty;
+	public TileType Type {
+		get { return _type; }
+		set {
+			TileType oldType = _type;
+			_type = value;
+			// Call the callback and let things know we've changed.
 
-    Action<Tile> cbtileTypeChanged;
-    
+			if(cbTileTypeChanged != null && oldType != _type)
+				cbTileTypeChanged(this);
+		}
+	}
 
-    public TileType Type {
-        get {
-            return type;
-        }
-        set {
-            TileType oldType = type;
-            type = value;
-            // call the callback 
-            if (cbtileTypeChanged != null && oldType != type) { 
-            cbtileTypeChanged(this); }
-        }
-    }
+	// LooseObject is something like a drill or a stack of metal sitting on the floor
+	LooseObject looseObject;
 
-    LooseObject looseObject;
-    InstalledObject installedObject;
+	// InstalledObject is something like a wall, door, or sofa.
+	InstalledObject installedObject;
 
-    World world;
-    int x;
+	// We need to know the context in which we exist. Probably. Maybe.
+	World world;
+	public int X { get; protected set; }
+	public int Y { get; protected set; }
 
-    public int X {
-        get {
-            return x;
-        }
-    }
+	// The function we callback any time our type changes
+	Action<Tile> cbTileTypeChanged;
 
-    int y;
-    public int Y {
-        get {
-            return y;
-        }
-    }
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Tile"/> class.
+	/// </summary>
+	/// <param name="world">A World instance.</param>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	public Tile( World world, int x, int y ) {
+		this.world = world;
+		this.X = x;
+		this.Y = y;
+	}
 
-    public Tile(World world, int x, int y)
-    {
-        this.world = world;
-        this.x = x;
-        this.y = y;
-    }
-
-    public void RegisterTileTypeChangedCallback(Action<Tile> callback) {
-        cbtileTypeChanged += callback;
-    }
-
-    public void UnregisterTileTypeChangedCallback(Action<Tile> callback) {
-        cbtileTypeChanged -= callback;
-    }
+	/// <summary>
+	/// Register a function to be called back when our tile type changes.
+	/// </summary>
+	public void RegisterTileTypeChangedCallback(Action<Tile> callback) {
+		cbTileTypeChanged += callback;
+	}
+	
+	/// <summary>
+	/// Unregister a callback.
+	/// </summary>
+	public void UnegisterTileTypeChangedCallback(Action<Tile> callback) {
+		cbTileTypeChanged -= callback;
+	}
+	
 }
